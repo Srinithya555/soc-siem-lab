@@ -1,0 +1,76 @@
+# Docker Compose for a local ELK (Elasticsearch/Logstash/Kibana) +
+# Wazuh manager lab environment. This is the REAL deployment path — the
+# Python detection engine in this repo (detection_engine/) exists to
+# test Sigma rule LOGIC quickly without this stack running; this
+# docker-compose is what actually ingests real logs and runs Wazuh's own
+# rule engine + lets you convert Sigma rules to Elastic queries for Kibana.
+#
+# IMPORTANT — verification status: this compose file was written against
+# documented image tags and standard Wazuh/ELK deployment patterns, but
+# has NOT been run in the environment this project was built in (no
+# Docker daemon, no network access to pull images). Treat this the same
+# way as the boto3 collectors in the aws-cspm-scanner project: carefully
+# written, but you are the first real test. Run `docker compose up` and
+# send me any errors.
+#
+# Wazuh publishes an official, actively-maintained docker-compose setup
+# at https://github.com/wazuh/wazuh-docker — for anything beyond a quick
+# personal lab, prefer their official deployment over this simplified
+# version, which trims some production hardening (TLS cert generation,
+# resource limits) for a faster first run.
+
+version: "3.8"
+
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.0
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.9.0
+    hostname: wazuh-manager
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "514:514/udp"
+      - "55000:55000"
+    volumes:
+      - wazuh-data:/var/ossec/data
+      - ./wazuh-rules:/var/ossec/etc/rules/custom
+
+volumes:
+  es-data:
+  wazuh-data:

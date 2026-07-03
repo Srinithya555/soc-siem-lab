@@ -1,0 +1,28 @@
+title: Potential LSASS Memory Dump via Process Access
+id: a3f1c2e4-1111-4b2a-9c3d-000000000002
+status: stable
+description: >
+  Detects a process opening a handle to lsass.exe with access rights
+  consistent with memory dumping (e.g. via tools like Mimikatz,
+  procdump, or comsvcs.dll's MiniDump export) — a common technique for
+  harvesting cached credentials from memory.
+references:
+  - https://attack.mitre.org/techniques/T1003/001/
+author: portfolio-project
+date: 2026-07-02
+tags:
+  - attack.credential_access
+  - attack.t1003.001
+logsource:
+  category: process_access
+  product: windows
+detection:
+  selection:
+    TargetImage|endswith: '\lsass.exe'
+  suspicious_source:
+    SourceImage|contains:
+      - 'procdump'
+      - 'rundll32'
+      - 'taskmgr'
+  condition: selection and suspicious_source
+level: critical

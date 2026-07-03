@@ -1,0 +1,28 @@
+title: Suspicious PowerShell Encoded Command Execution
+id: a3f1c2e4-1111-4b2a-9c3d-000000000001
+status: stable
+description: >
+  Detects PowerShell invoked with an encoded command and execution policy
+  bypass — a common pattern for delivering obfuscated malicious scripts
+  and evading naive script-content detection, since the payload is
+  base64-encoded on the command line rather than appearing as plaintext.
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+author: portfolio-project
+date: 2026-07-02
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection:
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains:
+      - '-enc'
+      - '-EncodedCommand'
+  bypass:
+    CommandLine|contains: '-ExecutionPolicy Bypass'
+  condition: selection and bypass
+level: high

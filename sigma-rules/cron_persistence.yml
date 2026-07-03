@@ -1,0 +1,24 @@
+title: Suspicious Cron Job Creation
+id: a3f1c2e4-1111-4b2a-9c3d-000000000003
+status: stable
+description: >
+  Detects a new cron job being added that downloads and executes a
+  remote script — a common persistence mechanism on Linux hosts, letting
+  an attacker regain access after a reboot or process kill.
+references:
+  - https://attack.mitre.org/techniques/T1053/003/
+author: portfolio-project
+date: 2026-07-02
+tags:
+  - attack.persistence
+  - attack.t1053.003
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    CommandLine|contains: 'crontab'
+  remote_fetch:
+    CommandLine|re: '(curl|wget).*\|\s*(bash|sh)'
+  condition: selection or remote_fetch
+level: high

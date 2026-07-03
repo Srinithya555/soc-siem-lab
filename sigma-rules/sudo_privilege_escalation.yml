@@ -1,0 +1,27 @@
+title: Sudo Privilege Escalation via NOPASSWD Abuse
+id: a3f1c2e4-1111-4b2a-9c3d-000000000004
+status: stable
+description: >
+  Detects a sudo invocation of a binary commonly abused for privilege
+  escalation when misconfigured with NOPASSWD sudoers entries (e.g. via
+  GTFOBins-style techniques using vim, find, or awk to spawn a root shell).
+references:
+  - https://attack.mitre.org/techniques/T1548/003/
+author: portfolio-project
+date: 2026-07-02
+tags:
+  - attack.privilege_escalation
+  - attack.t1548.003
+logsource:
+  category: process_creation
+  product: linux
+detection:
+  selection:
+    CommandLine|startswith: 'sudo'
+  gtfobin:
+    CommandLine|contains:
+      - 'vim -c'
+      - 'find . -exec /bin/sh'
+      - 'awk BEGIN'
+  condition: selection and gtfobin
+level: critical

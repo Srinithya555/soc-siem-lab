@@ -1,0 +1,28 @@
+title: SSH Authentication Failure (Possible Brute Force Precursor)
+id: a3f1c2e4-1111-4b2a-9c3d-000000000005
+status: stable
+description: >
+  Detects an SSH authentication failure event. Note: this rule matches
+  individual failure events; real brute-force detection needs an
+  aggregation/count-over-time rule (e.g. "5+ failures from the same
+  source IP within 60 seconds"), which is explicitly OUT of scope for
+  this simplified evaluator — see README "Known limitations." This rule
+  is intentionally left as an example of a single-event precursor signal
+  you'd feed into a real aggregation pipeline in production Sigma/SIEM
+  tooling (Elastic/Wazuh both support this kind of threshold rule
+  natively).
+references:
+  - https://attack.mitre.org/techniques/T1110/001/
+author: portfolio-project
+date: 2026-07-02
+tags:
+  - attack.credential_access
+  - attack.t1110.001
+logsource:
+  category: authentication
+  product: linux
+detection:
+  selection:
+    EventType: 'ssh_auth_failure'
+  condition: selection
+level: low
